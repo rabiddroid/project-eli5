@@ -16,54 +16,32 @@ import '@xyflow/react/dist/style.css';
 import EntityNode from './components/EntityNode';
 import Toolbar from './components/Toolbar';
 import GradeResult from './components/GradeResult';
-import type { GradeDiff } from '@/lib/grader';
-import { scenarios } from '@/lib/scenarios';
 import ScenarioPanel from './components/ScenarioPanel';
+import type { GradeDiff } from '@/lib/grader';
+import { scenarios, scenarioOrder } from '@/lib/scenarios';
 import { useSessionId } from './hooks/useSessionId';
 import { useAttempts } from './hooks/useAttempts';
-
-const SCENARIO_ID = 'library';
-const scenario = scenarios[SCENARIO_ID];
+import { useProgress } from './hooks/useProgress';
 
 const nodeTypes = { entity: EntityNode };
 
-const initialNodes: Node[] = [
-  {
-    id: 'node-1',
-    type: 'entity',
-    position: { x: 100, y: 150 },
-    data: {
-      name: 'books',
-      columns: [
-        { name: 'id', type: 'integer', isPrimaryKey: true },
-        { name: 'title', type: 'varchar', isPrimaryKey: false },
-      ],
-    },
-  },
-  {
-    id: 'node-2',
-    type: 'entity',
-    position: { x: 380, y: 150 },
-    data: {
-      name: 'members',
-      columns: [
-        { name: 'id', type: 'integer', isPrimaryKey: true },
-        { name: 'name', type: 'varchar', isPrimaryKey: false },
-      ],
-    },
-  },
-];
-
-const initialEdges: Edge[] = [];
+function emptyCanvas(): { nodes: Node[]; edges: Edge[] } {
+  return { nodes: [], edges: [] };
+}
 
 export default function Home() {
-  const [nodes, setNodes] = useState(initialNodes);
-  const [edges, setEdges] = useState(initialEdges);
-  const sessionId = useSessionId();
-  const { addAttempt } = useAttempts();
+  const [scenarioId, setScenarioId] = useState(scenarioOrder[0]);
+  const scenario = scenarios[scenarioId];
+
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
   const [grading, setGrading] = useState(false);
   const [result, setResult] = useState<GradeDiff | null>(null);
-  const idCounter = useRef(3);
+  const idCounter = useRef(1);
+
+  const sessionId = useSessionId();
+  const { attempts, addAttempt } = useAttempts();
+  const { markComplete, nextScenarioId } = useProgress();
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -85,7 +63,7 @@ export default function Home() {
     const newNode: Node = {
       id,
       type: 'entity',
-      position: { x: 100 + Math.random() * 200, y: 100 + Math.random() * 200 },
+      position: { x: 100 + Math.random() * 300, y: 100 + Math.random() * 200 },
       data: {
         name: 'new_entity',
         columns: [{ name: 'id', type: 'integer', isPrimaryKey: true }],
@@ -103,15 +81,16 @@ export default function Home() {
       const res = await fetch('/api/grade', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scenarioId: SCENARIO_ID, nodes: canvasNodes, edges: canvasEdges }),
+        body: JSON.stringify({ scenarioId, nodes: canvasNodes, edges: canvasEdges }),
       });
       const diff = await res.json();
       setResult(diff);
+      if (diff.correct) markComplete(scenarioId);
       if (sessionId) {
         addAttempt({
           id: crypto.randomUUID(),
           sessionId,
-          scenarioId: SCENARIO_ID,
+          scenarioId,
           timestamp: Date.now(),
           nodes: canvasNodes,
           edges: canvasEdges,
@@ -121,12 +100,30 @@ export default function Home() {
     } finally {
       setGrading(false);
     }
-  }, [nodes, edges]);
+  }, [nodes, edges, scenarioId, sessionId, addAttempt, markComplete]);
+
+  const onNextLevel = useCallback(() => {
+    const next = nextScenarioId(scenarioId);
+    if (!next) return;
+    setScenarioId(next);
+    const { nodes: n, edges: e } = emptyCanvas();
+    setNodes(n);
+    setEdges(e);
+    setResult(null);
+    idCounter.current = 1;
+  }, [scenarioId, nextScenarioId]);
+
+  const nextId = nextScenarioId(scenarioId);
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-      <ScenarioPanel title={scenario.title} description={scenario.description} />
-      <Toolbar onAddEntity={onAddEntity} onGrade={onGrade} grading={grading} />
+      <ScenarioPanel level={scenario.level} title={scenario.title} description={scenario.description} />
+      <Toolbar
+        onAddEntity={onAddEntity}
+        onGrade={onGrade}
+        grading={grading}
+        attempts={attempts.filter((a) => a.scenarioId === scenarioId).length}
+      />
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -136,7 +133,12 @@ export default function Home() {
         onConnect={onConnect}
         fitView
       />
-      {result && <GradeResult diff={result} />}
+      {result && (
+        <GradeResult
+          diff={result}
+          onNextLevel={nextId ? onNextLevel : undefined}
+        />
+      )}
     </div>
   );
 }

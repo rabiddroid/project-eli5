@@ -2,11 +2,26 @@
 
 import type { GradeDiff } from '@/lib/grader';
 
-export default function GradeResult({ diff }: { diff: GradeDiff }) {
+type Props = {
+  diff: GradeDiff;
+  onNextLevel?: () => void;
+};
+
+export default function GradeResult({ diff, onNextLevel }: Props) {
   if (diff.correct) {
     return (
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 bg-green-50 border border-green-300 rounded-lg shadow-md px-5 py-3 text-sm text-green-800 font-medium">
-        Correct! All entities and relationships are in place.
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 bg-green-50 border border-green-300 rounded-lg shadow-md px-5 py-3 flex items-center gap-4">
+        <span className="text-sm text-green-800 font-medium">
+          Correct! All entities and relationships are in place.
+        </span>
+        {onNextLevel && (
+          <button
+            onClick={onNextLevel}
+            className="text-sm font-semibold text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded-md transition-colors shrink-0"
+          >
+            Next Level →
+          </button>
+        )}
       </div>
     );
   }
