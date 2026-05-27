@@ -18,7 +18,7 @@ import Toolbar from './components/Toolbar';
 import GradeResult from './components/GradeResult';
 import ScenarioPanel from './components/ScenarioPanel';
 import type { GradeDiff } from '@/lib/grader';
-import { scenarios, scenarioOrder } from '@/lib/scenarios';
+import { scenarios } from '@/lib/scenarios';
 import { useSessionId } from './hooks/useSessionId';
 import { useAttempts } from './hooks/useAttempts';
 import { useProgress } from './hooks/useProgress';
@@ -30,18 +30,18 @@ function emptyCanvas(): { nodes: Node[]; edges: Edge[] } {
 }
 
 export default function Home() {
-  const [scenarioId, setScenarioId] = useState(scenarioOrder[0]);
-  const scenario = scenarios[scenarioId];
+  const sessionId = useSessionId();
+  const { attempts, addAttempt } = useAttempts();
+  const { currentScenarioId, markComplete, advanceTo, nextScenarioId } = useProgress();
+
+  const scenario = scenarios[currentScenarioId];
 
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [grading, setGrading] = useState(false);
   const [result, setResult] = useState<GradeDiff | null>(null);
+  const [attemptCount, setAttemptCount] = useState(0);
   const idCounter = useRef(1);
-
-  const sessionId = useSessionId();
-  const { attempts, addAttempt } = useAttempts();
-  const { markComplete, nextScenarioId } = useProgress();
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -82,16 +82,17 @@ export default function Home() {
       const res = await fetch('/api/grade', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scenarioId, nodes: canvasNodes, edges: canvasEdges }),
+        body: JSON.stringify({ scenarioId: currentScenarioId, nodes: canvasNodes, edges: canvasEdges }),
       });
       const diff = await res.json();
       setResult(diff);
-      if (diff.correct) markComplete(scenarioId);
+      setAttemptCount((c) => c + 1);
+      if (diff.correct) markComplete(currentScenarioId);
       if (sessionId) {
         addAttempt({
           id: crypto.randomUUID(),
           sessionId,
-          scenarioId,
+          scenarioId: currentScenarioId,
           timestamp: Date.now(),
           nodes: canvasNodes,
           edges: canvasEdges,
@@ -101,20 +102,21 @@ export default function Home() {
     } finally {
       setGrading(false);
     }
-  }, [nodes, edges, scenarioId, sessionId, addAttempt, markComplete]);
+  }, [nodes, edges, currentScenarioId, sessionId, addAttempt, markComplete]);
 
   const onNextLevel = useCallback(() => {
-    const next = nextScenarioId(scenarioId);
+    const next = nextScenarioId(currentScenarioId);
     if (!next) return;
-    setScenarioId(next);
+    advanceTo(next);
     const { nodes: n, edges: e } = emptyCanvas();
     setNodes(n);
     setEdges(e);
     setResult(null);
+    setAttemptCount(0);
     idCounter.current = 1;
-  }, [scenarioId, nextScenarioId]);
+  }, [currentScenarioId, nextScenarioId, advanceTo]);
 
-  const nextId = nextScenarioId(scenarioId);
+  const nextId = nextScenarioId(currentScenarioId);
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
@@ -123,7 +125,7 @@ export default function Home() {
         onAddEntity={onAddEntity}
         onGrade={onGrade}
         grading={grading}
-        attempts={attempts.filter((a) => a.scenarioId === scenarioId).length}
+        attempts={attemptCount}
       />
       <ReactFlow
         nodes={nodes}
