@@ -16,7 +16,12 @@ export type EntityNodeData = {
 const COLUMN_TYPES = ['integer', 'varchar', 'boolean', 'timestamp', 'text', 'decimal'];
 
 export default function EntityNode({ id, data }: { id: string; data: EntityNodeData }) {
-  const { setNodes } = useReactFlow();
+  const { setNodes, setEdges } = useReactFlow();
+
+  function deleteNode() {
+    setNodes((nodes) => nodes.filter((n) => n.id !== id));
+    setEdges((edges) => edges.filter((e) => e.source !== id && e.target !== id));
+  }
 
   function update(patch: Partial<EntityNodeData>) {
     setNodes((nodes) =>
@@ -44,13 +49,20 @@ export default function EntityNode({ id, data }: { id: string; data: EntityNodeD
       <Handle type="target" position={Position.Left} />
 
       {/* Entity name */}
-      <div className="bg-slate-700 rounded-t-md px-3 py-2">
+      <div className="bg-slate-700 rounded-t-md px-3 py-2 flex items-center gap-2 group">
         <input
           value={data.name}
           onChange={(e) => update({ name: e.target.value })}
-          className="w-full bg-transparent text-white text-sm font-semibold outline-none placeholder-slate-400"
+          className="flex-1 min-w-0 bg-transparent text-white text-sm font-semibold outline-none placeholder-slate-400"
           placeholder="entity_name"
         />
+        <button
+          onClick={deleteNode}
+          title="Delete entity"
+          className="text-slate-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity text-base leading-none shrink-0"
+        >
+          ×
+        </button>
       </div>
 
       {/* Columns */}
