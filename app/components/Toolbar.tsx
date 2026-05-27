@@ -2,9 +2,11 @@
 
 type Props = {
   onAddEntity: () => void;
+  onGrade: () => void;
+  grading: boolean;
 };
 
-export default function Toolbar({ onAddEntity }: Props) {
+export default function Toolbar({ onAddEntity, onGrade, grading }: Props) {
   return (
     <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex gap-2 bg-white border border-slate-200 rounded-lg shadow-md px-3 py-2">
       <button
@@ -12,6 +14,14 @@ export default function Toolbar({ onAddEntity }: Props) {
         className="text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 px-3 py-1.5 rounded-md transition-colors"
       >
         + Add Entity
+      </button>
+      <div className="w-px bg-slate-200" />
+      <button
+        onClick={onGrade}
+        disabled={grading}
+        className="text-sm font-medium text-white bg-slate-700 hover:bg-slate-800 disabled:opacity-50 px-3 py-1.5 rounded-md transition-colors"
+      >
+        {grading ? 'Checking…' : 'Check Answer'}
       </button>
     </div>
   );

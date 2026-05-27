@@ -15,6 +15,8 @@ import {
 import '@xyflow/react/dist/style.css';
 import EntityNode from './components/EntityNode';
 import Toolbar from './components/Toolbar';
+import GradeResult from './components/GradeResult';
+import type { GradeDiff } from '@/lib/grader';
 
 const nodeTypes = { entity: EntityNode };
 
@@ -50,6 +52,8 @@ const initialEdges: Edge[] = [];
 export default function Home() {
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
+  const [grading, setGrading] = useState(false);
+  const [result, setResult] = useState<GradeDiff | null>(null);
   const idCounter = useRef(3);
 
   const onNodesChange = useCallback(
@@ -81,9 +85,28 @@ export default function Home() {
     setNodes((nds) => [...nds, newNode]);
   }, []);
 
+  const onGrade = useCallback(async () => {
+    setGrading(true);
+    setResult(null);
+    try {
+      const res = await fetch('/api/grade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scenarioId: 'library',
+          nodes: nodes.map((n) => ({ id: n.id, name: n.data.name as string })),
+          edges: edges.map((e) => ({ source: e.source, target: e.target })),
+        }),
+      });
+      setResult(await res.json());
+    } finally {
+      setGrading(false);
+    }
+  }, [nodes, edges]);
+
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-      <Toolbar onAddEntity={onAddEntity} />
+      <Toolbar onAddEntity={onAddEntity} onGrade={onGrade} grading={grading} />
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -93,6 +116,7 @@ export default function Home() {
         onConnect={onConnect}
         fitView
       />
+      {result && <GradeResult diff={result} />}
     </div>
   );
 }
