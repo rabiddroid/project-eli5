@@ -17,6 +17,11 @@ import EntityNode from './components/EntityNode';
 import Toolbar from './components/Toolbar';
 import GradeResult from './components/GradeResult';
 import type { GradeDiff } from '@/lib/grader';
+import { scenarios } from '@/lib/scenarios';
+import ScenarioPanel from './components/ScenarioPanel';
+
+const SCENARIO_ID = 'library';
+const scenario = scenarios[SCENARIO_ID];
 
 const nodeTypes = { entity: EntityNode };
 
@@ -93,7 +98,7 @@ export default function Home() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          scenarioId: 'library',
+          scenarioId: SCENARIO_ID,
           nodes: nodes.map((n) => ({ id: n.id, name: n.data.name as string })),
           edges: edges.map((e) => ({ source: e.source, target: e.target })),
         }),
@@ -106,6 +111,7 @@ export default function Home() {
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+      <ScenarioPanel title={scenario.title} description={scenario.description} />
       <Toolbar onAddEntity={onAddEntity} onGrade={onGrade} grading={grading} />
       <ReactFlow
         nodes={nodes}
