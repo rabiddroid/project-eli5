@@ -72,6 +72,24 @@ describe('grade – library scenario', () => {
     expect(grade(nodes, edges, scenario)).toMatchObject({ correct: true });
   });
 
+  it('flags extra edge between recognized nodes', () => {
+    const nodes = [
+      { id: '1', name: 'books' },
+      { id: '2', name: 'members' },
+      { id: '3', name: 'loans' },
+    ];
+    // books → members is not an expected edge
+    const edges = [
+      { source: '1', target: '3' },
+      { source: '2', target: '3' },
+      { source: '1', target: '2' },
+    ];
+    const diff = grade(nodes, edges, scenario);
+    expect(diff.extraEdges).toHaveLength(1);
+    expect(diff.extraEdges[0]).toMatchObject({ source: 'books', target: 'members' });
+    expect(diff.correct).toBe(false);
+  });
+
   it('normalizes capitalization: "Books" matches books', () => {
     const nodes = [
       { id: '1', name: 'Books' },

@@ -14,6 +14,7 @@ export type GradeDiff = {
   missingNodes: string[];
   extraNodes: string[];
   missingEdges: { source: string; target: string }[];
+  extraEdges: { source: string; target: string }[];
   correct: boolean;
 };
 
@@ -70,10 +71,23 @@ export function grade(
     );
   });
 
+  const extraEdges = drawnEdges.filter((drawn) => {
+    return !scenario.edges.some(
+      (expected) =>
+        (expected.source === drawn.source && expected.target === drawn.target) ||
+        (expected.source === drawn.target && expected.target === drawn.source)
+    );
+  });
+
   return {
     missingNodes,
     extraNodes,
     missingEdges,
-    correct: missingNodes.length === 0 && extraNodes.length === 0 && missingEdges.length === 0,
+    extraEdges,
+    correct:
+      missingNodes.length === 0 &&
+      extraNodes.length === 0 &&
+      missingEdges.length === 0 &&
+      extraEdges.length === 0,
   };
 }

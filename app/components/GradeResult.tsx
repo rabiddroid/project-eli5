@@ -41,8 +41,14 @@ export default function GradeResult({ diff, onNextLevel }: Props) {
           </li>
         ))}
         {diff.missingEdges.map((e) => (
-          <li key={`${e.source}-${e.target}`} className="text-slate-600">
+          <li key={`missing-${e.source}-${e.target}`} className="text-slate-600">
             <span className="text-red-500 font-medium">Missing relationship:</span>{' '}
+            {e.source} → {e.target}
+          </li>
+        ))}
+        {diff.extraEdges.map((e) => (
+          <li key={`extra-${e.source}-${e.target}`} className="text-slate-600">
+            <span className="text-amber-500 font-medium">Unexpected relationship:</span>{' '}
             {e.source} → {e.target}
           </li>
         ))}
