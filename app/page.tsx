@@ -19,6 +19,8 @@ import GradeResult from './components/GradeResult';
 import type { GradeDiff } from '@/lib/grader';
 import { scenarios } from '@/lib/scenarios';
 import ScenarioPanel from './components/ScenarioPanel';
+import { useSessionId } from './hooks/useSessionId';
+import { useAttempts } from './hooks/useAttempts';
 
 const SCENARIO_ID = 'library';
 const scenario = scenarios[SCENARIO_ID];
@@ -57,6 +59,8 @@ const initialEdges: Edge[] = [];
 export default function Home() {
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
+  const sessionId = useSessionId();
+  const { addAttempt } = useAttempts();
   const [grading, setGrading] = useState(false);
   const [result, setResult] = useState<GradeDiff | null>(null);
   const idCounter = useRef(3);
@@ -94,16 +98,26 @@ export default function Home() {
     setGrading(true);
     setResult(null);
     try {
+      const canvasNodes = nodes.map((n) => ({ id: n.id, name: n.data.name as string }));
+      const canvasEdges = edges.map((e) => ({ source: e.source, target: e.target }));
       const res = await fetch('/api/grade', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          scenarioId: SCENARIO_ID,
-          nodes: nodes.map((n) => ({ id: n.id, name: n.data.name as string })),
-          edges: edges.map((e) => ({ source: e.source, target: e.target })),
-        }),
+        body: JSON.stringify({ scenarioId: SCENARIO_ID, nodes: canvasNodes, edges: canvasEdges }),
       });
-      setResult(await res.json());
+      const diff = await res.json();
+      setResult(diff);
+      if (sessionId) {
+        addAttempt({
+          id: crypto.randomUUID(),
+          sessionId,
+          scenarioId: SCENARIO_ID,
+          timestamp: Date.now(),
+          nodes: canvasNodes,
+          edges: canvasEdges,
+          diff,
+        });
+      }
     } finally {
       setGrading(false);
     }
