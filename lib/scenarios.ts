@@ -13,6 +13,7 @@ export type Scenario = {
   level: number;
   title: string;
   description: string;
+  instructions: string;
   nodes: ExpectedNode[];
   edges: ExpectedEdge[];
 };
@@ -23,6 +24,7 @@ export const scenarios: Record<string, Scenario> = {
     level: 1,
     title: 'Library',
     description: 'A library needs to track books and members. Members can borrow books.',
+    instructions: 'Draw the tables this system needs and connect related ones with edges.',
     nodes: [
       {
         canonical: 'books',
@@ -48,6 +50,7 @@ export const scenarios: Record<string, Scenario> = {
     level: 2,
     title: 'Blog',
     description: 'A blogging platform where authors write posts. Posts can have anonymous comments.',
+    instructions: 'Draw the tables this system needs and connect related ones with edges.',
     nodes: [
       {
         canonical: 'authors',
@@ -73,6 +76,7 @@ export const scenarios: Record<string, Scenario> = {
     level: 3,
     title: 'Hospital',
     description: 'A hospital needs to track doctors and patients. Doctors can see many patients, and patients can be seen by many doctors.',
+    instructions: 'Draw the tables this system needs and connect related ones with edges.',
     nodes: [
       {
         canonical: 'doctors',

@@ -11,6 +11,7 @@ export type Column = {
 export type EntityNodeData = {
   name: string;
   columns: Column[];
+  mode?: 'simple' | 'full';
 };
 
 const COLUMN_TYPES = ['integer', 'varchar', 'boolean', 'timestamp', 'text', 'decimal'];
@@ -65,51 +66,53 @@ export default function EntityNode({ id, data }: { id: string; data: EntityNodeD
         </button>
       </div>
 
-      {/* Columns */}
-      <div className="divide-y divide-slate-100">
-        {data.columns.map((col, i) => (
-          <div key={i} className="flex items-center gap-1.5 px-2 py-1.5 text-xs group">
+      {/* Columns — full mode only */}
+      {data.mode === 'full' && (
+        <>
+          <div className="divide-y divide-slate-100">
+            {data.columns.map((col, i) => (
+              <div key={i} className="flex items-center gap-1.5 px-2 py-1.5 text-xs group">
+                <button
+                  onClick={() => updateColumn(i, { isPrimaryKey: !col.isPrimaryKey })}
+                  title="Toggle primary key"
+                  className={`w-6 shrink-0 font-bold ${col.isPrimaryKey ? 'text-amber-500' : 'text-slate-200 hover:text-amber-300'}`}
+                >
+                  PK
+                </button>
+                <input
+                  value={col.name}
+                  onChange={(e) => updateColumn(i, { name: e.target.value })}
+                  className="flex-1 min-w-0 text-slate-800 outline-none bg-transparent hover:bg-slate-50 focus:bg-slate-50 rounded px-1"
+                  placeholder="column_name"
+                />
+                <select
+                  value={col.type}
+                  onChange={(e) => updateColumn(i, { type: e.target.value })}
+                  className="text-slate-400 bg-transparent outline-none cursor-pointer hover:text-slate-600"
+                >
+                  {COLUMN_TYPES.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => deleteColumn(i)}
+                  className="text-slate-200 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="px-3 py-1.5 border-t border-slate-100">
             <button
-              onClick={() => updateColumn(i, { isPrimaryKey: !col.isPrimaryKey })}
-              title="Toggle primary key"
-              className={`w-6 shrink-0 font-bold ${col.isPrimaryKey ? 'text-amber-500' : 'text-slate-200 hover:text-amber-300'}`}
+              onClick={addColumn}
+              className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
             >
-              PK
-            </button>
-            <input
-              value={col.name}
-              onChange={(e) => updateColumn(i, { name: e.target.value })}
-              className="flex-1 min-w-0 text-slate-800 outline-none bg-transparent hover:bg-slate-50 focus:bg-slate-50 rounded px-1"
-              placeholder="column_name"
-            />
-            <select
-              value={col.type}
-              onChange={(e) => updateColumn(i, { type: e.target.value })}
-              className="text-slate-400 bg-transparent outline-none cursor-pointer hover:text-slate-600"
-            >
-              {COLUMN_TYPES.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-            <button
-              onClick={() => deleteColumn(i)}
-              className="text-slate-200 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-            >
-              ×
+              + add column
             </button>
           </div>
-        ))}
-      </div>
-
-      {/* Add column */}
-      <div className="px-3 py-1.5 border-t border-slate-100">
-        <button
-          onClick={addColumn}
-          className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
-        >
-          + add column
-        </button>
-      </div>
+        </>
+      )}
 
       <Handle type="source" position={Position.Right} />
     </div>

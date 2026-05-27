@@ -66,7 +66,8 @@ export default function Home() {
       position: { x: 100 + Math.random() * 300, y: 100 + Math.random() * 200 },
       data: {
         name: 'new_entity',
-        columns: [{ name: 'id', type: 'integer', isPrimaryKey: true }],
+        columns: [],
+        mode: 'simple',
       },
     };
     setNodes((nds) => [...nds, newNode]);
@@ -117,7 +118,7 @@ export default function Home() {
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-      <ScenarioPanel level={scenario.level} title={scenario.title} description={scenario.description} />
+      <ScenarioPanel level={scenario.level} title={scenario.title} description={scenario.description} instructions={scenario.instructions} />
       <Toolbar
         onAddEntity={onAddEntity}
         onGrade={onGrade}
