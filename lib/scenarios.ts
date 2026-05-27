@@ -47,7 +47,7 @@ export const scenarios: Record<string, Scenario> = {
     id: 'blog',
     level: 2,
     title: 'Blog',
-    description: 'A blogging platform where authors write posts. Readers can leave comments on posts.',
+    description: 'A blogging platform where authors write posts. Posts can have anonymous comments.',
     nodes: [
       {
         canonical: 'authors',
