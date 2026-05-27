@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   ReactFlow,
   addEdge,
@@ -14,6 +14,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import EntityNode from './components/EntityNode';
+import Toolbar from './components/Toolbar';
 
 const nodeTypes = { entity: EntityNode };
 
@@ -49,6 +50,7 @@ const initialEdges: Edge[] = [];
 export default function Home() {
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
+  const idCounter = useRef(3);
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -65,8 +67,23 @@ export default function Home() {
     []
   );
 
+  const onAddEntity = useCallback(() => {
+    const id = `node-${idCounter.current++}`;
+    const newNode: Node = {
+      id,
+      type: 'entity',
+      position: { x: 100 + Math.random() * 200, y: 100 + Math.random() * 200 },
+      data: {
+        name: 'new_entity',
+        columns: [{ name: 'id', type: 'integer', isPrimaryKey: true }],
+      },
+    };
+    setNodes((nds) => [...nds, newNode]);
+  }, []);
+
   return (
-    <div style={{ width: '100vw', height: '100vh' }}>
+    <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+      <Toolbar onAddEntity={onAddEntity} />
       <ReactFlow
         nodes={nodes}
         edges={edges}
