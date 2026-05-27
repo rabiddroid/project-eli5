@@ -1,12 +1,23 @@
 'use client';
 
-import { ReactFlow } from '@xyflow/react';
+import { useCallback, useState } from 'react';
+import {
+  ReactFlow,
+  addEdge,
+  applyEdgeChanges,
+  applyNodeChanges,
+  type Connection,
+  type Edge,
+  type EdgeChange,
+  type Node,
+  type NodeChange,
+} from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import EntityNode from './components/EntityNode';
 
 const nodeTypes = { entity: EntityNode };
 
-const nodes = [
+const initialNodes: Node[] = [
   {
     id: 'node-1',
     type: 'entity',
@@ -33,12 +44,38 @@ const nodes = [
   },
 ];
 
-const edges = [{ id: 'e1-2', source: 'node-1', target: 'node-2' }];
+const initialEdges: Edge[] = [];
 
 export default function Home() {
+  const [nodes, setNodes] = useState(initialNodes);
+  const [edges, setEdges] = useState(initialEdges);
+
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    []
+  );
+
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    []
+  );
+
+  const onConnect = useCallback(
+    (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
+    []
+  );
+
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
-      <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView />
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        fitView
+      />
     </div>
   );
 }
